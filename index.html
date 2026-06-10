@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="sl">
+    <head>
+        <meta charset="UTF-8">
+        <title>Koledar</title>
+        <link rel="stylesheet" href="bootstrap/css/bootstrap.min.css">
+        <link rel="stylesheet" href="css/style.css">
+    </head>
+
+    <body>
+        <h1>Koledar</h1>
+
+        <label for="month">Mesec:</label>
+        <select id="month">
+            <option value="0">Januar</option>
+            <option value="1">Februar</option>
+            <option value="2">Marec</option>
+            <option value="3">April</option>
+            <option value="4">Maj</option>
+            <option value="5">Junij</option>
+            <option value="6">Julij</option>
+            <option value="7">Avgust</option>
+            <option value="8">September</option>
+            <option value="9">Oktober</option>
+            <option value="10">November</option>
+            <option value="11">December</option>
+        </select>
+
+        <label for="year">Leto:</label>
+        <input type="number" id="year" value="2023" min="2020" max="2030">
+        <button onclick="generateCalendar()">Prikaži koledar</button>
+        <!-- uporabnik izbere mesec in leto, nato klikne na gumb "Prikaži koledar", kar sproži funkcijo generateCalendar() -->
+
+        <table id="calendar">
+
+            <!-- glava tabele -->
+            <thead>
+                <tr>
+                    <th>PON</th>
+                    <th>TOR</th>
+                    <th>SRE</th>
+                    <th>ČET</th>
+                    <th>PET</th>
+                    <th>SOB</th>
+                    <th>NED</th>
+                </tr>
+            </thead>
+            
+            <tbody>
+                <!-- tu JavaScript doda vrstico s številkami dni
+                 upošteva: kateri mesec in katero leto je izbrano, koliko dni je v mesecu in na kateri dan se mesec začne
+                 v tbody nato ustvari vrstice z dnevi od 1 do x (št. dni v mesecu) in vsak dan vstavi kot <td>1</td>, <td>2</td>, ... -->
+            </tbody>
+        </table>
+
+        <script>
+            // objekt v JavaScriptu, ki vsebuje seznam praznikov
+            // ključ: 2023-1-1 -> datum (leto-mesec-dan)
+            // vrednost: NOVO LETO -> ime praznika
+            // tako JS ve, da 1. januar 2023 pomeni "NOVO LETO"
+            const holidayMap = {
+                //Prazniki v letu 2023
+                "2023-1-1": "NOVO LETO",
+                "2023-1-2": "NOVO LETO",
+                "2023-2-8": "PREŠERNOV DAN",
+                "2023-4-9": "VELIKA NOČ",
+                "2023-4-10": "VELIKONOČNI PONEDELJEK",
+                "2023-4-27": "DAN UPORA PROTI OKUPATORJU",
+                "2023-5-1": "PRAZNIK DELA",
+                "2023-5-2": "PRAZNIK DELA",
+                "2023-6-25": "DAN DRŽAVNOSTI",
+                "2023-8-15": "MARIJINO VNEBOVZETJE",
+                "2023-10-31": "DAN REFORMACIJE",
+                "2023-11-1": "DAN SPOMINA NA MRTVE",
+                "2023-12-25": "BOŽIČ",
+                "2023-12-26": "DAN SAMOSTOJNOSTI IN ENOTNOSTI"
+            };
+
+            // funkcija
+            function generateCalendar() {
+                const month = parseInt(document.getElementById("month").value); // prebere uporabnikovo izbira meseca (iz select)
+                const year = parseInt(document.getElementById("year").value); // prebere uporabnikovo izbira leta (iz input)
+                const tbody = document.querySelector("#calendar tbody"); // počisti prejšnjo vsebino, ko klikneš gumb
+                tbody.innerHTML = "";
+
+                const firstDay = new Date(year, month, 1); // prvi dan izbranega meseca
+                const lastDay = new Date(year, month + 1, 0); // zadnji dan v izbranem mesecu
+                const daysInMonth = lastDay.getDate(); // preveri koliko dni je v izbranem mesecu
+
+                // izračuna s katerim dnem se mesec začne
+                let startDay = firstDay.getDay(); // getDay () vrne 0 za nedeljo in 1 za ponedeljek
+                if (startDay === 0) startDay = 7; // s tem spremenimo, da je ponedeljek = 1 in nedelja = 7 dan v tednu
+
+                // izriše začetno vrstico
+                let row = document.createElement("tr");
+                let cellCounter = 1;
+
+                for (let i = 1; i < startDay; i++) {
+                    row.appendChild(document.createElement("td"));
+                    cellCounter++;
+                }
+                // doda prazne <td>, če se mesec ne začne s ponedeljkom
+
+                // izriše vse dneve v mesecu    
+                for (let day = 1; day <= daysInMonth; day++) {
+                    let cell = document.createElement("td"); // zanka gre od 1 do x št. dni v mesecu
+
+                    // določi dneve v tednu (vikend ali delovni dan)
+                    let tempDate = new Date(year, month, day);
+                    let dayOfWeek = tempDate.getDay();
+                    if (dayOfWeek === 0) dayOfWeek = 7;
+
+                    // označi praznike
+                    const key = `${year}-${month + 1}-${day}`;
+                    if (holidayMap[key]) {
+                        cell.innerHTML = `<strong>${day}</strong><br><span style="font-size:11px; color:#2f684e; display:block; margin-top:4px;">${holidayMap[key]}</span>`;
+                    } else {
+                        cell.textContent = day;
+                    }
+                    // če je trenutni dan v holidayMap prikaže tudi ime praznika
+                    // če ni praznik, potem izpiše samo številko dneva
+
+                    // označi vikende in jih obrava s CSS
+                    if (dayOfWeek === 6 || dayOfWeek === 7) {
+                        cell.classList.add("weekend");
+                    }
+
+                    // zaključi vrsto, ko je v vrsti 7 dni (ko pride do nedelje - 7 celic, doda vrstico v <tbody> in ponovno dodaja celice)
+                    row.appendChild(cell);
+
+                    if (cellCounter % 7 === 0) {
+                        tbody.appendChild(row);
+                        row = document.createElement("tr");
+                    }
+                    cellCounter++;
+                }
+
+                // če zadnja vrstica ni dokončana, ima npr. samo 5 celic, jo vseeno prikaže
+                if (row.children.length > 0) {
+                    tbody.appendChild(row);
+                }
+            }
+
+            // klic funkcije ob nalaganju strani (tako se koledar samodejno izriše že ob odprtju strani)
+            generateCalendar();
+        </script>
+    </body>
+</html>
